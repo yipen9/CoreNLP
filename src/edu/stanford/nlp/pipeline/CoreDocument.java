@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
  * Wrapper around an annotation representing a document.  Adds some helpful methods.
  *
  */
-
 public class CoreDocument {
 
   protected Annotation annotationDocument;
@@ -31,22 +30,23 @@ public class CoreDocument {
   /** complete the wrapping process post annotation by a pipeline **/
   public void wrapAnnotations() {
     // wrap all of the sentences
-    if (this.annotationDocument.get(CoreAnnotations.SentencesAnnotation.class) != null)
+    if (this.annotationDocument.get(CoreAnnotations.SentencesAnnotation.class) != null) {
       wrapSentences();
-    // if there are entity mentions, build a document wide list
-    if (sentences.get(0).entityMentions() != null) {
+      // if there are entity mentions, build a document wide list
+      if ( ! sentences.isEmpty() && sentences.get(0).entityMentions() != null) {
         buildDocumentEntityMentionsList();
+      }
+      // if there are quotes, build a document wide list
+      if (QuoteAnnotator.gatherQuotes(this.annotationDocument) != null)
+        buildDocumentQuotesList();
     }
-    // if there are quotes, build a document wide list
-    if (QuoteAnnotator.gatherQuotes(this.annotationDocument) != null)
-      buildDocumentQuotesList();
   }
 
   /** create list of CoreSentence's based on the Annotation's sentences **/
   private void wrapSentences() {
     sentences = this.annotationDocument.get(CoreAnnotations.SentencesAnnotation.class).
         stream().map(coreMapSentence -> new CoreSentence(this, coreMapSentence)).collect(Collectors.toList());
-    sentences.forEach(sentence -> sentence.wrapEntityMentions());
+    sentences.forEach(CoreSentence::wrapEntityMentions);
   }
 
   /** build a list of all entity mentions in the document from the sentences **/

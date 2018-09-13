@@ -962,7 +962,7 @@ public abstract class AbstractSequenceClassifier<IN extends CoreMap> implements 
 
   /**
    * Takes a {@link List} of documents and prints the likelihood of each
-   * possible label at each point.
+   * possible label at each point. Also prints probability calibration information over document collection.
    *
    * @param documents A {@link List} of {@link List} of something that extends
    *          {@link CoreMap}.
@@ -1500,11 +1500,11 @@ public abstract class AbstractSequenceClassifier<IN extends CoreMap> implements 
    * .gz, uses a GZIPInputStream.
    */
   public void loadClassifier(String loadPath, Properties props) throws ClassCastException, IOException, ClassNotFoundException {
-    InputStream is = IOUtils.getInputStreamFromURLOrClasspathOrFileSystem(loadPath);
-    Timing t = new Timing();
-    loadClassifier(is, props);
-    is.close();
-    t.done(log, "Loading classifier from " + loadPath);
+    try (InputStream is = IOUtils.getInputStreamFromURLOrClasspathOrFileSystem(loadPath)) {
+      Timing t = new Timing();
+      loadClassifier(is, props);
+      t.done(log, "Loading classifier from " + loadPath);
+    }
   }
 
   public void loadClassifierNoExceptions(String loadPath) {
@@ -1547,9 +1547,12 @@ public abstract class AbstractSequenceClassifier<IN extends CoreMap> implements 
     } else {
       bis = new BufferedInputStream(new FileInputStream(file));
     }
-    loadClassifier(bis, props);
-    bis.close();
-    t.done(log, "Loading classifier from " + file.getAbsolutePath());
+    try {
+      loadClassifier(bis, props);
+      t.done(log, "Loading classifier from " + file.getAbsolutePath());
+    } finally {
+      bis.close();
+    }
   }
 
   public void loadClassifierNoExceptions(File file) {

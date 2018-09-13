@@ -205,14 +205,13 @@ public class ProtobufAnnotationSerializer extends AnnotationSerializer {
    */
   @SuppressWarnings({"UnusedDeclaration", "ThrowFromFinallyBlock"})
   public Annotation readUndelimited(File in) throws IOException {
-    FileInputStream undelimited = new FileInputStream(in);
     CoreNLPProtos.Document doc;
     try (FileInputStream delimited = new FileInputStream(in)) {
       doc = CoreNLPProtos.Document.parseFrom(delimited);
     } catch (Exception e) {
-      doc = CoreNLPProtos.Document.parseDelimitedFrom(undelimited);
-    } finally {
-      undelimited.close();
+      try(FileInputStream undelimited = new FileInputStream(in)) {
+        doc = CoreNLPProtos.Document.parseDelimitedFrom(undelimited);
+      }
     }
     return fromProto(doc);
   }
@@ -1720,11 +1719,15 @@ public class ProtobufAnnotationSerializer extends AnnotationSerializer {
           entityMention.set(CharacterOffsetEndAnnotation.class, emCharOffsetEnd);
           entityMention.set(CoreAnnotations.TokensAnnotation.class, entityMentionTokens);
         }
-        if (sentence.getHasEntityMentionsAnnotation())
+        if (sentence.getHasEntityMentionsAnnotation()) {
           map.set(CoreAnnotations.MentionsAnnotation.class, mentions);
+        }
         // add to document level list of entity mentions
-        for (CoreMap sentenceEM : mentions) {
-          ann.get(CoreAnnotations.MentionsAnnotation.class).add(sentenceEM);
+        List<CoreMap> mentionsOnAnnotation = ann.get(MentionsAnnotation.class);
+        if (mentionsOnAnnotation != null) {
+          for (CoreMap sentenceEM : mentions) {
+            ann.get(CoreAnnotations.MentionsAnnotation.class).add(sentenceEM);
+          }
         }
       }
       // End iteration

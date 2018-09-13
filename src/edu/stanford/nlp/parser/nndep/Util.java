@@ -110,7 +110,7 @@ public class Util  {
    *
    * @return Shared random generator object
    */
-  static Random getRandom(long seed) {
+  private static Random getRandom(long seed) {
     random = new Random(seed);
     log.info(String.format("Random generator initialized with seed %d%n", seed));
 
@@ -139,9 +139,7 @@ public class Util  {
   {
     CoreLabelTokenFactory tf = new CoreLabelTokenFactory(false);
 
-    BufferedReader reader = null;
-    try {
-      reader = IOUtils.readerFromString(inFile);
+    try (BufferedReader reader = IOUtils.readerFromString(inFile)) {
 
       List<CoreLabel> sentenceTokens = new ArrayList<>();
       DependencyTree tree = new DependencyTree();
@@ -183,8 +181,6 @@ public class Util  {
       }
     } catch (IOException e) {
       throw new RuntimeIOException(e);
-    } finally {
-      IOUtils.closeIgnoringExceptions(reader);
     }
   }
 
